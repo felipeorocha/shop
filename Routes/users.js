@@ -4,13 +4,28 @@ const Users = require('../Models/users');
 
 router.get('/', (req, res) => {
   Users.find({}, (err, data) => {
+    const isAdmin = true;
     if (err) {
-      return res.send({ message: 'Error on user query.' })
+      return res.send({ message: 'Error on users list query.' })
     } else {
-      return res.send(data);
+        if(isAdmin) {
+          return res.send(data); // Return users list. Should be an authenticated route, only admin may access.
+        } else {
+          return res.send({ message: 'Admin only.' })
+        }
     }
   });
 });
+
+router.get('/:_id', (req, res) => {
+  const { _id } = req.params;
+  Users.findOne({ _id }, (err, data) => {
+    if (err) {
+      return res.send({ message: `Error on user search. Be sure of user's id. ${err}` })
+    }
+      return res.send(data)
+  })
+})
 
 router.post('/create', (req, res) => {
   const { login, password, name } = req.body;
