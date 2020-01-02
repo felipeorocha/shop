@@ -3,29 +3,34 @@ const router = express.Router();
 const Users = require('../Models/users');
 
 router.get('/', (req, res) => {
-  Users.find({}, (err, data) => {
-    const isAdmin = true;
-    if (err) {
-      return res.send({ message: 'Error on users list query.' })
-    } else {
-        if(isAdmin) {
-          return res.send(data); // Return users list. Should be an authenticated route, only admin may access.
+  const { _id } = req.body;
+  if (!_id) {
+    Users.find({}, (err, data) => {
+      const isAdmin = true;
+      if (err) {
+        return res.send({ message: 'Error on users list query.' })
+      } else {
+          if(isAdmin) {
+            return res.send(data); // Return users list. Should be an authenticated route, only admin may access.
+          } else {
+            return res.send({ message: 'Admin only.' })
+          }
+      }
+    });
+  } else {
+    Users.findOne({ _id }, (err, data) => {
+      if (err) {
+        return res.send({ message: `Error on user search. ${err}` })
+      } else {
+        if (!data) {
+          return res.send({ message: "User id not found" });
         } else {
-          return res.send({ message: 'Admin only.' })
+          return res.send(data);
         }
-    }
-  });
+      }
+    });
+  }
 });
-
-router.get('/:_id', (req, res) => {
-  const { _id } = req.params;
-  Users.findOne({ _id }, (err, data) => {
-    if (err) {
-      return res.send({ message: `Error on user search. Be sure of user's id. ${err}` })
-    }
-      return res.send(data)
-  })
-})
 
 router.post('/create', (req, res) => {
   const { login, password, name } = req.body;
@@ -52,6 +57,25 @@ router.post('/create', (req, res) => {
       }
     });
   });
+});
+
+router.delete('/delete', (req, res) => {
+  const { _id } = req.body;
+  Users.findOne({ _id }, (err, data) => {
+    if (err) {
+      if (!_id) {
+        return res.send({ message: `User not found. Invalid user id. ${err}` });
+      }
+    } else {
+      Users.deleteOne({ _id }, (err, data) => {
+        if (err) {
+          return res.send({ message: `Error deleting user. ${err}` })
+        } else {
+          return res.send(data);
+        }
+      });
+    }
+  })
 });
 
 module.exports = router;
